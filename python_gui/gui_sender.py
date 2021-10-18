@@ -8,6 +8,7 @@ from lxml import etree
 import sys
 from rclpy.exceptions import ParameterNotDeclaredException
 from rcl_interfaces.msg import ParameterType
+from ament_index_python.packages import get_package_share_directory
 
 class EventSender(QtWidgets.QWidget,Node):
     
@@ -22,7 +23,7 @@ class EventSender(QtWidgets.QWidget,Node):
 
         #ros related stuff
         self.declare_parameter('topic_name', '/events')
-        self.declare_parameter('xml_button_file','/home/gborghesan/Desktop/yumi_etasl_apps/cartesian_trj_1/cpf/buttons.xml')#todo - set default value
+        self.declare_parameter('xml_button_file', get_package_share_directory('python_gui')+'/xml/default.xml')
         
         topic_name=self.get_parameter('topic_name').get_parameter_value().string_value
         
@@ -43,7 +44,7 @@ class EventSender(QtWidgets.QWidget,Node):
            print("file not found - ERROR")
            
            
-        print("file {} loaded".format(file_name))
+        print("------------------------------------------file {} loaded".format(file_name))
         
             
         #print "file name:\n"+file_name
@@ -77,7 +78,7 @@ class EventSender(QtWidgets.QWidget,Node):
         self.setGeometry(300, 300, 290, 150)
         self.move(1500, 150)
         self.setWindowTitle('Event sender')
-        #self.setWindowIcon(QtGui.QIcon((get_pkg_dir("python_gui")) + '/resources/es_ico.png'))
+        self.setWindowIcon(QtGui.QIcon((get_package_share_directory("python_gui")) + '/icons/es_ico.png'))
         self.show()
         
             
