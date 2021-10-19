@@ -30,36 +30,47 @@ See xml/gui_sender.launch for an example with the default values.
 
 
 
-orocos integration - STILL TO PORT THIS TO RTT_ROS2
+orocos integration 
 -----
 The file 'lua_components/signal_echo.lua'  is a an orocos component realized in lua, that reads a std_msgs/String from a topic and echos as a normal string.
 to connect easily with components running rFSM.  
 
-for loading the component (in indigo) try something like
+for loading the component check the code in the `test_deploy/deploy_echo.lua`, that  can be run with:
+
+
+```
+rttlua -i `ros2 pkg prefix python_gui`/share/python_gui/test_deploy/deploy_echo.lua
+```
+
+the code in he file is 
+
 ```
 require "rttlib"
+require "rttros"
 
-tc = tc or rtt.getTC()
-depl = depl or tc:getPeer("Deployer")
-depl:import("rtt_rosnode")
-depl:import("rtt_ros")
-depl:import("rtt_std_msgs")
-depl:import("rtt_rospack")-- this for using the find
+tc=rtt.getTC()
+if tc:getName() == "lua" then
+  depl=tc:getPeer("Deployer")
+elseif tc:getName() == "Deployer" then
+  depl=tc
+end
+depl:import("rtt_ros2")
+ros=rtt.provides("ros")
+ros:import("rtt_ros2_std_msgs")
+ros_application_name = "echo_test"
+
+rtt.provides("ros"):create_named_node_with_namespace("Main_node",ros_application_name)
+
 
 depl:loadComponent("eventEcho", "OCL::LuaComponent")
+--... and get references to them
 eventEcho = depl:getPeer("eventEcho")
-eventEcho:exec_file( rtt.provides("ros"):find("python_gui").."/lua_components/signal_echo.lua")
+ -- load the Lua hooks
+eventEcho:exec_file(rtt.provides("ros"):find("python_gui").."/lua_components/signal_echo.lua")
+--configure and starts
 eventEcho:configure()
+eventEcho:start()
 
---stream data to component
-cp_ros=rtt.Variable("ConnPolicy")
-cp_ros.transport=3
-cp_ros.name_id="/events"
-depl:stream("eventEcho.event_in",cp_ros)
---here, connect "eventEcho.event_out" to some other component
-cp=rtt.Variable("ConnPolicy")
-cp.type=1-- a buffer
-cp.size=10
---depl:connect("...","eventEcho.event_out",cp)
+-- in the end create a stream
+depl:stream("eventEcho.event_in", ros:topic("/events",false))
 ```
-

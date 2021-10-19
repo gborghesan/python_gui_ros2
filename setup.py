@@ -14,6 +14,8 @@ setup(
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
         (os.path.join('share', package_name, 'xml'), glob('xml/*.xml')),
         (os.path.join('share', package_name, 'icons'), glob('icons/es_ico.png')),
+        (os.path.join('share', package_name, 'test_deploy'), glob('test_deploy/*.lua')),
+        (os.path.join('share', package_name, 'lua_components'), glob('lua_components/*.lua')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
