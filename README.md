@@ -1,14 +1,25 @@
-
 gui_sender.py
 -------------------------
-A simple interface that reads from an xml file with the format
+A simple interface that reads from an _xml_ or _json_ file with the format
+Xml example:
 
-```
+```xml
 <list>
     <button name='Start' event='e_start' tooltip='start the robot'/>
     <button name='Stop' event='e_stop'/>
 </list>
 ```
+Json example:
+
+```json
+{
+"buttons" :[
+	{"name":"Start", "event":"e_start","tooltip":"start the robot" },
+	{"name":"Stop", "event":"e_stop"}
+	]
+}
+```
+
 
 Each button group produces a button that, if pressed sends the named event.
 The default topic is /events, but can be altered using the ros parameter 'topic_name', see gui_sender.launch for an example on how to change this.
@@ -20,14 +31,19 @@ Use example:
 ```
 ros2 launch python_gui gui.launch.py 
 ```
+or
+```
+ros2 launch python_gui gui_json.launch.py 
+```
 
 parameters
 ----------
-See xml/gui_sender.launch for an example with the default values.
+See launch files for an examples with the default values.
 
- * topic\_name: name of the topic to publish the events on
- * xml\_button\_file: file including location of the xml file with the event buttons to create.
-
+ * use\_json: (bool) if set to true, the node uses the json specification, otherwise use the xml (default: False)
+ * topic\_name: (string) name of the topic to publish the events on (default: "\events")
+ * xml\_button\_file: (string) absolute location of the xml file with the event buttons to create.
+ * json\_button\_file: (string) absolute location of the xjsonml file with the event buttons to create.
 
 
 orocos integration 

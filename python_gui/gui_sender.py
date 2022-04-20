@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from curses import has_key
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
@@ -9,12 +10,12 @@ import sys
 from rclpy.exceptions import ParameterNotDeclaredException
 from rcl_interfaces.msg import ParameterType
 from ament_index_python.packages import get_package_share_directory
-
+import json
 class EventSender(QtWidgets.QWidget,Node):
     
     def __init__(self):
         #QtWidgets.QWidget.__init__(self,node_name='prova')
-        super(EventSender, self).__init__(node_name='prova')
+        super(EventSender, self).__init__(node_name='event_sender')
         self.initUI()
       
         
@@ -23,7 +24,9 @@ class EventSender(QtWidgets.QWidget,Node):
 
         #ros related stuff
         self.declare_parameter('topic_name', '/events')
-        self.declare_parameter('xml_button_file', get_package_share_directory('python_gui')+'/xml/default.xml')
+        self.declare_parameter('use_json', False)
+        self.declare_parameter('xml_button_file', get_package_share_directory('python_gui')+'/json/default.json')
+        self.declare_parameter('json_button_file', get_package_share_directory('python_gui')+'/xml/default.xml')
         
         topic_name=self.get_parameter('topic_name').get_parameter_value().string_value
         
@@ -38,31 +41,53 @@ class EventSender(QtWidgets.QWidget,Node):
         
     def create_buttons(self):
         QtWidgets.QToolTip.setFont(QtGui.QFont('SansSerif', 10))
-        file_name=self.get_parameter('xml_button_file').get_parameter_value().string_value
-        if file_name=="":
-           #file_name =(get_pkg_dir("python_gui"))+"/xml/default.xml"
-           print("file not found - ERROR")
-           
-           
-        print("------------------------------------------file {} loaded".format(file_name))
-        
-            
-        #print "file name:\n"+file_name
-        file_map = etree.parse(file_name)
-        
-        list_event =  file_map.getroot()
+        use_json=self.get_parameter('use_json').get_parameter_value().bool_value
         grid = QtWidgets.QGridLayout()
-        i=0
-        for child  in list_event:
-            self.string_map[child.get('name')]=child.get('event')
-            btn=QtWidgets.QPushButton(child.get('name'), self)
-            grid.addWidget(btn,i,0)
-            btn.clicked.connect(self.buttonClicked) 
-            tooltip_text=child.get('tooltip')
-            if tooltip_text!=None:
-                btn.setToolTip(tooltip_text)
+        if not use_json:
+            file_name=self.get_parameter('xml_button_file').get_parameter_value().string_value
+            if file_name=="":
+            #file_name =(get_pkg_dir("python_gui"))+"/xml/default.xml"
+                self.get_logger().error("file {} not found".format(file_name))
+    
+            self.get_logger().info("file {} loaded".format(file_name))
             
-            i=i+1
+                
+            #print "file name:\n"+file_name
+            file_map = etree.parse(file_name)
+            
+            list_event =  file_map.getroot()
+            
+            i=0
+            for child  in list_event:
+                self.string_map[child.get('name')]=child.get('event')
+                btn=QtWidgets.QPushButton(child.get('name'), self)
+                grid.addWidget(btn,i,0)
+                btn.clicked.connect(self.buttonClicked) 
+                tooltip_text=child.get('tooltip')
+                if tooltip_text!=None:
+                    btn.setToolTip(tooltip_text)
+                
+                i=i+1
+        else:
+            file_name=self.get_parameter('json_button_file').get_parameter_value().string_value
+            print ("file name:\n"+file_name)
+            with open(file_name) as json_file:
+                data = json.load(json_file)
+                self.buttons=data['buttons']
+                print("here")
+                i=0
+                for button  in data['buttons']:
+                    print("button {}".format(button['name']) )
+                    self.string_map[button['name']]=button['event']
+                    btn=QtWidgets.QPushButton(button['name'], self)
+                    grid.addWidget(btn,i,0)
+                    i=i+1
+                    btn.clicked.connect(self.buttonClickedJson) 
+                    tooltip_text=button.get('tooltip')
+                    if tooltip_text!=None:
+                        btn.setToolTip(tooltip_text)
+
+            
  
         #layout: a vbox divided in 3 parts
         # the grid, a Stretch to fill in the space and a status bar
@@ -83,6 +108,17 @@ class EventSender(QtWidgets.QWidget,Node):
         
             
     def buttonClicked(self):
+      
+        sender = self.sender()
+        string_key=(sender.text()) 
+        event_to_send=self.string_map[string_key]
+        self.statBar.showMessage(string_key + ' pressed.\n->sent: '+
+                                    event_to_send)
+        s=String()
+        s.data=event_to_send
+        self.pub.publish(s)
+
+    def buttonClickedJson(self):
       
         sender = self.sender()
         string_key=(sender.text()) 

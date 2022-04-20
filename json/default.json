@@ -1,0 +1,6 @@
+{
+"buttons" :[
+	{"name":"Start", "event":"e_start","tooltip":"start the robot" },
+	{"name":"Stop", "event":"e_stop"}
+	]
+}
